@@ -3,6 +3,7 @@ package com.example.pawtholepatrol.feature.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
@@ -11,20 +12,25 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.pawtholepatrol.core.model.UserPrefs
-import kotlin.math.roundToInt
 
 @Composable
-fun SettingsScreen(
-    prefs: UserPrefs,
-    onPrefsChanged: (UserPrefs) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun SettingsScreen(modifier: Modifier = Modifier) {
+    var alertDistance by remember { mutableFloatStateOf(120f) }
+    var soundEnabled by remember { mutableStateOf(true) }
+    var ttsEnabled by remember { mutableStateOf(true) }
+
     Column(
-        modifier = modifier.padding(16.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Card(modifier = Modifier.fillMaxWidth()) {
@@ -32,26 +38,23 @@ fun SettingsScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("Alert Settings", style = MaterialTheme.typography.titleMedium)
-                Text("Alert distance: ${prefs.alertDistanceMeters}m")
+                Text("Settings", style = MaterialTheme.typography.titleMedium)
+                Text("Alert distance: ${alertDistance.toInt()}m")
                 Slider(
-                    value = prefs.alertDistanceMeters.toFloat(),
-                    onValueChange = { value ->
-                        onPrefsChanged(prefs.copy(alertDistanceMeters = value.roundToInt()))
-                    },
+                    value = alertDistance,
+                    onValueChange = { alertDistance = it },
                     valueRange = 40f..300f,
                 )
 
                 ToggleRow(
                     label = "Sound alerts",
-                    checked = prefs.soundEnabled,
-                    onCheckedChange = { onPrefsChanged(prefs.copy(soundEnabled = it)) },
+                    checked = soundEnabled,
+                    onCheckedChange = { soundEnabled = it },
                 )
-
                 ToggleRow(
-                    label = "Voice (TTS) alerts",
-                    checked = prefs.ttsEnabled,
-                    onCheckedChange = { onPrefsChanged(prefs.copy(ttsEnabled = it)) },
+                    label = "TTS alerts",
+                    checked = ttsEnabled,
+                    onCheckedChange = { ttsEnabled = it },
                 )
             }
         }
