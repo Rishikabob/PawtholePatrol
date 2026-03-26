@@ -14,22 +14,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.pawtholepatrol.feature.capture.CaptureScreen
-import com.example.pawtholepatrol.feature.map.MapScreen
-import com.example.pawtholepatrol.feature.route.RouteScreen
+import com.example.pawtholepatrol.feature.home.HomeScreen
 import com.example.pawtholepatrol.feature.settings.SettingsScreen
 
 private enum class AppTab(val label: String, val iconText: String) {
-    MAP("Map", "M"),
-    CAPTURE("Capture", "C"),
-    ROUTE("Route", "R"),
+    HOME("Home", "H"),
     SETTINGS("Settings", "S"),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PawtholeApp() {
-    var selectedTab by rememberSaveable { mutableStateOf(AppTab.MAP.name) }
+    var selectedTab by rememberSaveable { mutableStateOf(AppTab.HOME.name) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -50,9 +46,7 @@ fun PawtholeApp() {
         },
     ) { innerPadding ->
         when (AppTab.valueOf(selectedTab)) {
-            AppTab.MAP -> MapScreen(modifier = Modifier.padding(innerPadding))
-            AppTab.CAPTURE -> CaptureScreen(modifier = Modifier.padding(innerPadding))
-            AppTab.ROUTE -> RouteScreen(modifier = Modifier.padding(innerPadding))
+            AppTab.HOME -> HomeScreen(modifier = Modifier.padding(innerPadding))
             AppTab.SETTINGS -> SettingsScreen(modifier = Modifier.padding(innerPadding))
         }
     }

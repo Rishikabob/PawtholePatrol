@@ -52,7 +52,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     onCheckedChange = { soundEnabled = it },
                 )
                 ToggleRow(
-                    label = "TTS alerts",
+                    label = "Auto Detect",
                     checked = ttsEnabled,
                     onCheckedChange = { ttsEnabled = it },
                 )
