@@ -28,7 +28,7 @@
         <service android:name=".PotholeDetectionService"
                 android:foregroundServiceType="location|connectedDevice" />
         <!-- Receiver for the inquiry button -->
-        <receiver android:name=".ConfirmationReceiver" android:exported="false"/>
+        <receiver android:name=".utility.ConfirmationReceiver" android:exported="false"/>
     </application>
 
 </manifest>
