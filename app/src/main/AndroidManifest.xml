@@ -3,6 +3,13 @@
 
     <!-- Application permissions -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <application
@@ -25,8 +32,10 @@
             </intent-filter>
         </activity>
         <receiver android:name=".ActivityReceiver" />
-        <service android:name=".PotholeDetectionService"
-                android:foregroundServiceType="location|connectedDevice" />
+        <service
+            android:name=".PotholeDetectionService"
+            android:exported="false"
+            android:foregroundServiceType="location|connectedDevice" />
         <!-- Receiver for the inquiry button -->
         <receiver android:name=".utility.ConfirmationReceiver" android:exported="false"/>
     </application>
