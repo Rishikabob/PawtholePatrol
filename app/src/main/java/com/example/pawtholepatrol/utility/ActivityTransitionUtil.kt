@@ -1,4 +1,4 @@
-package com.example.pawtholepatrol.util
+package com.example.pawtholepatrol.utility
 
 import com.google.android.gms.location.ActivityTransition
 import com.google.android.gms.location.ActivityTransitionRequest

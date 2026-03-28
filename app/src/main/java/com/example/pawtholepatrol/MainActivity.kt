@@ -14,7 +14,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.pawtholepatrol.feature.root.PawtholeApp
 import com.example.pawtholepatrol.ui.theme.PawtholePatrolTheme
-import com.example.pawtholepatrol.util.ActivityTransitionUtil
+import com.example.pawtholepatrol.utility.ActivityTransitionUtil
+import com.example.pawtholepatrol.utility.EventConfirmationHelper
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityRecognitionClient
 
@@ -32,6 +33,7 @@ class MainActivity : ComponentActivity() {
         }
         client = ActivityRecognition.getClient(this)
         requestActivityPermission()
+        EventConfirmationHelper.init(this)
     }
 
     private val requestPermissionLauncher =
@@ -72,5 +74,12 @@ class MainActivity : ComponentActivity() {
     private fun getPendingIntent(): PendingIntent {
         val intent = Intent(this, ActivityReceiver::class.java)
         return PendingIntent.getBroadcast(this, 122, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Close the inquiry utility on application shutdown
+        EventConfirmationHelper.shutdown()
     }
 }
