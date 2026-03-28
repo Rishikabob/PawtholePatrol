@@ -4,7 +4,7 @@
     <!-- Application permissions -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -17,7 +17,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.PawtholePatrol">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,10 +24,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <receiver android:name=".ActivityReceiver" />
+        <service android:name=".PotholeDetectionService"
+                android:foregroundServiceType="location|connectedDevice" />
         <!-- Receiver for the inquiry button -->
-        <receiver android:name=".ConfirmationReceiver" android:exported="false"/>
-
+        <receiver android:name=".utility.ConfirmationReceiver" android:exported="false"/>
     </application>
 
 </manifest>
