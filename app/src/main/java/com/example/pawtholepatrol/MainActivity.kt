@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.pawtholepatrol.feature.root.PawtholeApp
 import com.example.pawtholepatrol.ui.theme.PawtholePatrolTheme
+import com.example.pawtholepatrol.utility.EventConfirmationHelper
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,5 +17,15 @@ class MainActivity : ComponentActivity() {
                 PawtholeApp()
             }
         }
+
+        // Start the inquiry utility
+        EventConfirmationHelper.init(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Close the inquiry utility on application shutdown
+        EventConfirmationHelper.shutdown()
     }
 }
