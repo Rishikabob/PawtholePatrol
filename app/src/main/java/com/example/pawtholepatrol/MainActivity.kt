@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -32,7 +33,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         client = ActivityRecognition.getClient(this)
-        requestActivityPermission()
+        requestStartupPermissions()
         EventConfirmationHelper.init(this)
     }
 
@@ -45,6 +46,37 @@ class MainActivity : ComponentActivity() {
                 requestActivityPermission()
             }
         }
+
+    private val requestMultiplePermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
+            requestActivityPermission()
+        }
+
+    private fun requestStartupPermissions() {
+        val missing = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            missing += Manifest.permission.POST_NOTIFICATIONS
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            missing += Manifest.permission.ACCESS_FINE_LOCATION
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) {
+            missing += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        }
+
+        if (missing.isNotEmpty()) {
+            requestMultiplePermissionsLauncher.launch(missing.toTypedArray())
+        } else {
+            requestActivityPermission()
+        }
+    }
 
     private fun requestActivityPermission() {
         if (ContextCompat.checkSelfPermission(
