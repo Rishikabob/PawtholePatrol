@@ -8,22 +8,44 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 
 class NotificationHelper(private val context: Context) {
-    private val channelId = "alerts_channel_v0"
+    private val ALERTS_CHANNEL_ID = "alerts_channel_v1"
+    private val CRITICAL_CHANNEL_ID = "critical_channel_v1"
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun createChannel() {
-        val channel = NotificationChannel(
-            channelId,
-            "Alerts",
+    fun createChannels() {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val alertsChannel = NotificationChannel(
+            ALERTS_CHANNEL_ID,
+            "General Alerts",
             NotificationManager.IMPORTANCE_DEFAULT
         )
 
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(channel)
+        val criticalChannel = NotificationChannel(
+            CRITICAL_CHANNEL_ID,
+            "Critical Alerts",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+
+        manager.createNotificationChannel(alertsChannel)
+        manager.createNotificationChannel(criticalChannel)
     }
 
-    fun showNotification(title: String, message: String) {
-        val notification = NotificationCompat.Builder(context, channelId)
+    fun showCriticalNotification(title: String, message: String) {
+        val notification = NotificationCompat.Builder(context, CRITICAL_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .build()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(System.currentTimeMillis().toInt(), notification)
+    }
+
+    fun showGeneralNotification(title: String, message: String) {
+        val notification = NotificationCompat.Builder(context, ALERTS_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setContentTitle(title)
             .setContentText(message)
@@ -32,6 +54,5 @@ class NotificationHelper(private val context: Context) {
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(System.currentTimeMillis().toInt(), notification)
-
     }
 }

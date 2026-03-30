@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
         }
 
         notificationHelper = NotificationHelper(this)
-        notificationHelper.createChannel()
+        notificationHelper.createChannels()
         requestNotificationPermission()
     }
 

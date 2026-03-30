@@ -24,7 +24,7 @@ fun NotificationScreen(modifier: Modifier = Modifier) {
     var bannerMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        notificationHelper.createChannel()
+        notificationHelper.createChannels()
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -52,12 +52,28 @@ fun NotificationScreen(modifier: Modifier = Modifier) {
                     bannerMessage = null
                 }
 
-                notificationHelper.showNotification(
+                notificationHelper.showCriticalNotification(
                     "Hazard Alert",
                     "Test hazard detected ahead"
                 )
             }) {
-                Text("Test In-app Notification")
+                Text("Test In-app Critical Notification")
+            }
+
+            Button(onClick = {
+                bannerMessage = "Pothole Detected"
+
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(3000)
+                    bannerMessage = null
+                }
+
+                notificationHelper.showGeneralNotification(
+                    "Pothole Detected",
+                    "A new pothole location has been detected"
+                )
+            }) {
+                Text("Test In-app General Notification")
             }
         }
     }
