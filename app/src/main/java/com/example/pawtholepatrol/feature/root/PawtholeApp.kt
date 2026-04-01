@@ -15,11 +15,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.pawtholepatrol.feature.home.HomeScreen
+import com.example.pawtholepatrol.feature.sim.SimulationScreen
 import com.example.pawtholepatrol.feature.settings.SettingsScreen
 
 private enum class AppTab(val label: String, val iconText: String) {
     HOME("Home", "H"),
     SETTINGS("Settings", "S"),
+    SIMULATION(label = "Simulation", iconText = "SIM")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +50,7 @@ fun PawtholeApp() {
         when (AppTab.valueOf(selectedTab)) {
             AppTab.HOME -> HomeScreen(modifier = Modifier.padding(innerPadding))
             AppTab.SETTINGS -> SettingsScreen(modifier = Modifier.padding(innerPadding))
+            AppTab.SIMULATION -> SimulationScreen(modifier = Modifier.padding(innerPadding))
         }
     }
 }
