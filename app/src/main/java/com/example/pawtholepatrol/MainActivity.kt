@@ -13,6 +13,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.annotation.RequiresApi
+import com.example.pawtholepatrol.feature.notifications.NotificationHelper
 import com.example.pawtholepatrol.feature.root.PawtholeApp
 import com.example.pawtholepatrol.ui.theme.PawtholePatrolTheme
 import com.example.pawtholepatrol.utility.ActivityTransitionUtil
@@ -24,6 +26,9 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var client: ActivityRecognitionClient
 
+    private lateinit var notificationHelper: NotificationHelper
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -32,9 +37,13 @@ class MainActivity : ComponentActivity() {
                 PawtholeApp()
             }
         }
+
         client = ActivityRecognition.getClient(this)
         requestStartupPermissions()
         EventConfirmationHelper.init(this)
+
+        notificationHelper = NotificationHelper(this)
+        notificationHelper.createChannels()
     }
 
     private val requestPermissionLauncher =
