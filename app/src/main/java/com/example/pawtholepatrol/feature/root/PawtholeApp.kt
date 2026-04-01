@@ -1,7 +1,5 @@
 package com.example.pawtholepatrol.feature.root
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,16 +15,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.pawtholepatrol.feature.home.HomeScreen
-import com.example.pawtholepatrol.feature.notifications.NotificationScreen
+import com.example.pawtholepatrol.feature.sim.SimulationScreen
 import com.example.pawtholepatrol.feature.settings.SettingsScreen
 
 private enum class AppTab(val label: String, val iconText: String) {
     HOME("Home", "H"),
     SETTINGS("Settings", "S"),
-    NOTIFICATIONS(label = "Notifications", iconText = "N")
+    SIMULATION(label = "Simulation", iconText = "SIM")
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PawtholeApp() {
@@ -53,7 +50,7 @@ fun PawtholeApp() {
         when (AppTab.valueOf(selectedTab)) {
             AppTab.HOME -> HomeScreen(modifier = Modifier.padding(innerPadding))
             AppTab.SETTINGS -> SettingsScreen(modifier = Modifier.padding(innerPadding))
-            AppTab.NOTIFICATIONS -> NotificationScreen(modifier = Modifier.padding(innerPadding))
+            AppTab.SIMULATION -> SimulationScreen(modifier = Modifier.padding(innerPadding))
         }
     }
 }

@@ -13,7 +13,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.annotation.RequiresApi
 import com.example.pawtholepatrol.feature.notifications.NotificationHelper
 import com.example.pawtholepatrol.feature.root.PawtholeApp
 import com.example.pawtholepatrol.ui.theme.PawtholePatrolTheme

@@ -7,14 +7,17 @@ import com.example.pawtholepatrol.feature.notifications.NotificationHelper
 class HazardMonitor(
     private val index: GeoSpatialIndex,
     private val radiusMeters: Double,
-    private val notificationHelper: NotificationHelper
+    private val notificationHelper: NotificationHelper,
+    private val onEvent: (String) -> Unit
 ) {
+
     private var isInsideHazardZone = false
 
     fun onLocationUpdate(current: GeoPoint) {
         val nearby = index.findNearby(current, radiusMeters)
-
         val currentlyInside = nearby.isNotEmpty()
+
+        println("Location: $current | Nearby: ${nearby.size}")
 
         if (!isInsideHazardZone && currentlyInside) {
             isInsideHazardZone = true
@@ -24,7 +27,7 @@ class HazardMonitor(
                 "You are entering a hazard area"
             )
 
-            println("ENTER hazard zone")
+            onEvent("ENTER hazard zone")
         }
         else if (isInsideHazardZone && !currentlyInside) {
             isInsideHazardZone = false
@@ -34,7 +37,7 @@ class HazardMonitor(
                 "You have left the hazard area"
             )
 
-            println("EXIT hazard zone")
+            onEvent("EXIT hazard zone")
         }
     }
 }
