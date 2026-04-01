@@ -1,7 +1,5 @@
 package com.example.pawtholepatrol.feature.notifications
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -15,7 +13,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NotificationScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current

@@ -3,15 +3,12 @@ package com.example.pawtholepatrol.feature.notifications
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 
 class NotificationHelper(private val context: Context) {
     private val ALERTS_CHANNEL_ID = "alerts_channel_v1"
     private val CRITICAL_CHANNEL_ID = "critical_channel_v1"
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun createChannels() {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 

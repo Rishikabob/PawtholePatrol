@@ -2,6 +2,7 @@ package com.example.pawtholepatrol.feature.monitor
 
 import com.example.pawtholepatrol.feature.geo.GeoPoint
 import com.example.pawtholepatrol.feature.geo.GeoSpatialIndex
+import com.example.pawtholepatrol.feature.notifications.NotificationHelper
 
 class HazardMonitor(
     private val index: GeoSpatialIndex,
@@ -35,9 +36,5 @@ class HazardMonitor(
 
             println("EXIT hazard zone")
         }
-    }
-
-    private fun showGeneralNotification(string: String, string2: String) {
-        TODO("Not yet implemented")
     }
 }

@@ -28,7 +28,6 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var notificationHelper: NotificationHelper
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -74,8 +73,7 @@ class MainActivity : ComponentActivity() {
             missing += Manifest.permission.ACCESS_FINE_LOCATION
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
             missing += Manifest.permission.ACCESS_BACKGROUND_LOCATION
         }
