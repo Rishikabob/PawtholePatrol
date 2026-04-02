@@ -11,14 +11,18 @@ class LocationSimulator(
     private val intervalMs: Long = 1000L
 ) {
 
-    fun start(onLocationUpdate: (GeoPoint) -> Unit) {
+    fun start(
+        onLocationUpdate: (GeoPoint) -> Unit,
+        onFinished: (() -> Unit)? = null
+    ) {
         CoroutineScope(Dispatchers.Default).launch {
-            while (true) {
-                for (point in path) {
-                    onLocationUpdate(point)
-                    delay(intervalMs)
-                }
+
+            for (point in path) {
+                onLocationUpdate(point)
+                delay(intervalMs)
             }
+
+            onFinished?.invoke()
         }
     }
 }

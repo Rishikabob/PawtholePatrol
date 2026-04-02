@@ -29,29 +29,36 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
         notificationHelper.createChannels()
     }
 
-    val hazards = listOf(
-        GeoPoint(40.4533953856059, -79.9469436680444),
-        GeoPoint(40.4531974456379, -79.9475791078329),
-        GeoPoint(40.4520497943914, -79.9494989987492),
-        GeoPoint(40.4515073478504, -79.9492576228172),
-        GeoPoint(40.4512426030564, -79.9491365755203),
-        GeoPoint(40.4510547976252, -79.9490503726385),
-        GeoPoint(40.4508547148008, -79.9489585344209),
-        GeoPoint(40.4453094372525, -79.9483909280942),
-        GeoPoint(40.4457845730441, -79.9494342823836),
-        GeoPoint(40.445763126924, -79.9496695432699),
-        GeoPoint(40.446286682318, -79.9500484353365),
-        GeoPoint(40.4462987774823, -79.949898771809),
-        GeoPoint(40.4463266438935, -79.949580295764)
+//    val hazards = listOf(
+//        GeoPoint(40.4533953856059, -79.9469436680444),
+//        GeoPoint(40.4531974456379, -79.9475791078329),
+//        GeoPoint(40.4520497943914, -79.9494989987492),
+//        GeoPoint(40.4515073478504, -79.9492576228172),
+//        GeoPoint(40.4512426030564, -79.9491365755203),
+//        GeoPoint(40.4510547976252, -79.9490503726385),
+//        GeoPoint(40.4508547148008, -79.9489585344209),
+//        GeoPoint(40.4453094372525, -79.9483909280942),
+//        GeoPoint(40.4457845730441, -79.9494342823836),
+//        GeoPoint(40.445763126924, -79.9496695432699),
+//        GeoPoint(40.446286682318, -79.9500484353365),
+//        GeoPoint(40.4462987774823, -79.949898771809),
+//        GeoPoint(40.4463266438935, -79.949580295764)
+//    )
+
+    val pathToTraverse = listOf(
+        GeoPoint(40.4, -79.9),
+        GeoPoint(40.5, -79.8)
     )
 
-    val index = GeoSpatialIndex()
-    index.addPoints(hazards)
+
+    val hazardIndex = GeoSpatialIndex()
+    //index.addPoints(hazards)
+    hazardIndex.addPoint(GeoPoint(40.4 ,-79.9))
 
 
 
     val monitor = HazardMonitor(
-        index = index,
+        index = hazardIndex,
         radiusMeters = 100.0,
         notificationHelper = notificationHelper
     ) { message ->
@@ -64,7 +71,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    val simulator = LocationSimulator(hazards)
+    val simulator = LocationSimulator(pathToTraverse)
 
     Column(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
@@ -116,9 +123,21 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
             }
 
             Button(onClick = {
-                simulator.start { location ->
-                    monitor.onLocationUpdate(location)
-                }
+                simulator.start(
+                    onLocationUpdate = { location ->
+                        monitor.onLocationUpdate(location)
+                    },
+                    onFinished = {
+                        println("Simulation complete")
+
+                        bannerMessage = "Simulation complete"
+
+                        CoroutineScope(Dispatchers.Main).launch {
+                            delay(1000)
+                            bannerMessage = null
+                        }
+                    }
+                )
             }) {
                 Text("Start Simulation")
             }
