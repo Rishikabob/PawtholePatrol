@@ -122,24 +122,33 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                 Text("Test In-app General Notification")
             }
 
-            Button(onClick = {
-                simulator.start(
-                    onLocationUpdate = { location ->
-                        monitor.onLocationUpdate(location)
-                    },
-                    onFinished = {
-                        println("Simulation complete")
+            var isRunning by remember { mutableStateOf(false) }
 
-                        bannerMessage = "Simulation complete"
+            Button(
+                onClick = {
+                    if (isRunning) return@Button
 
-                        CoroutineScope(Dispatchers.Main).launch {
-                            delay(1000)
-                            bannerMessage = null
+                    isRunning = true
+
+                    simulator.start(
+                        onLocationUpdate = { location ->
+                            monitor.onLocationUpdate(location)
+                        },
+                        onFinished = {
+                            isRunning = false
+
+                            bannerMessage = "Simulation complete"
+
+                            CoroutineScope(Dispatchers.Main).launch {
+                                delay(2000)
+                                bannerMessage = null
+                            }
                         }
-                    }
-                )
-            }) {
-                Text("Start Simulation")
+                    )
+                },
+                enabled = !isRunning
+            ) {
+                Text(if (isRunning) "Running..." else "Start Simulation")
             }
         }
     }
