@@ -49,9 +49,10 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
 //    )
 
     val pathToTraverse = listOf(
-        GeoPoint(40.4, -79.9),
         GeoPoint(40.41, -79.91),
         GeoPoint(40.4, -79.9),
+        GeoPoint(40.41, -79.91),
+        GeoPoint(40.4004, -79.9004),
         GeoPoint(40.41, -79.91),
         GeoPoint(40.42, -79.92),
     )
@@ -60,7 +61,9 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
     val hazardIndex = GeoSpatialIndex()
     //index.addPoints(hazards)
     hazardIndex.addPoint(GeoPoint(40.4 ,-79.9))
+    hazardIndex.addPoint(GeoPoint(40.4008 ,-79.9008))
     hazardIndex.addPoint(GeoPoint(40.42 ,-79.92))
+
 
 
     val delayBetweenSteps = 3000.toLong()
@@ -82,53 +85,53 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
     val simulator = LocationSimulator(pathToTraverse)
 
     Column(modifier = modifier.fillMaxSize()) {
-        AnimatedVisibility(
-            visible = bannerMessage != null,
-            enter = slideInVertically { -it },
-            exit = slideOutVertically { -it }
-        ) {
-            AlertBanner(
-                message = bannerMessage ?: "",
-                backgroundColor = Color.Red
-            )
-        }
+//        AnimatedVisibility(
+//            visible = bannerMessage != null,
+//            enter = slideInVertically { -it },
+//            exit = slideOutVertically { -it }
+//        ) {
+//            AlertBanner(
+//                message = bannerMessage ?: "",
+//                backgroundColor = Color.Red
+//            )
+//        }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Button(onClick = {
-                bannerMessage = "Hazard ahead!"
+//            Button(onClick = {
+//                bannerMessage = "Hazard ahead!"
+//
+//                CoroutineScope(Dispatchers.Main).launch {
+//                    delay(delayBetweenSteps)
+//                    bannerMessage = null
+//                }
+//
+//                notificationHelper.showCriticalNotification(
+//                    "Hazard Alert",
+//                    "Test hazard detected ahead"
+//                )
+//            }) {
+//                Text("Test In-app Critical Notification")
+//            }
 
-                CoroutineScope(Dispatchers.Main).launch {
-                    delay(delayBetweenSteps)
-                    bannerMessage = null
-                }
-
-                notificationHelper.showCriticalNotification(
-                    "Hazard Alert",
-                    "Test hazard detected ahead"
-                )
-            }) {
-                Text("Test In-app Critical Notification")
-            }
-
-            Button(onClick = {
-                bannerMessage = "Pothole Detected"
-
-                CoroutineScope(Dispatchers.Main).launch {
-                    delay(delayBetweenSteps)
-                    bannerMessage = null
-                }
-
-                notificationHelper.showGeneralNotification(
-                    "Pothole Detected",
-                    "A new pothole location has been detected"
-                )
-            }) {
-                Text("Test In-app General Notification")
-            }
+//            Button(onClick = {
+//                bannerMessage = "Pothole Detected"
+//
+//                CoroutineScope(Dispatchers.Main).launch {
+//                    delay(delayBetweenSteps)
+//                    bannerMessage = null
+//                }
+//
+//                notificationHelper.showGeneralNotification(
+//                    "Pothole Detected",
+//                    "A new pothole location has been detected"
+//                )
+//            }) {
+//                Text("Test In-app General Notification")
+//            }
 
             var isRunning by remember { mutableStateOf(false) }
 
@@ -162,6 +165,19 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                 enabled = !isRunning
             ) {
                 Text(if (isRunning) "Running..." else "Start Simulation")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Current Location:")
+
+            if (currentLocation == null || !isRunning) {
+                Text("None")
+            } else {
+                    Text(
+                        text = "Lat: %.5f, Lon: %.5f"
+                            .format(currentLocation!!.latitude, currentLocation!!.longitude)
+                    )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
