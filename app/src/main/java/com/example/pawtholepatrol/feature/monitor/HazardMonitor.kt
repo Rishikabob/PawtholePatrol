@@ -22,7 +22,7 @@ class HazardMonitor(
         if (!isInsideHazardZone && currentlyInside) {
             isInsideHazardZone = true
 
-            notificationHelper.showGeneralNotification(
+            notificationHelper.showCriticalNotification(
                 "Hazard Ahead",
                 "You are entering a hazard area"
             )
@@ -32,7 +32,7 @@ class HazardMonitor(
         else if (isInsideHazardZone && !currentlyInside) {
             isInsideHazardZone = false
 
-            notificationHelper.showGeneralNotification(
+            notificationHelper.showCriticalNotification(
                 "Safe Area",
                 "You have left the hazard area"
             )

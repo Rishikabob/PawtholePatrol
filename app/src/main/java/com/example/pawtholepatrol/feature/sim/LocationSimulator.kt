@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 
 class LocationSimulator(
     private val path: List<GeoPoint>,
-    private val intervalMs: Long = 1000L
+    private val intervalMs: Long = 5000L
 ) {
 
     fun start(
@@ -21,6 +21,8 @@ class LocationSimulator(
                 onLocationUpdate(point)
                 delay(intervalMs)
             }
+
+            delay(intervalMs)
 
             onFinished?.invoke()
         }

@@ -47,7 +47,8 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
 
     val pathToTraverse = listOf(
         GeoPoint(40.4, -79.9),
-        GeoPoint(40.5, -79.8)
+        GeoPoint(40.41, -79.91),
+        GeoPoint(40.4, -79.9)
     )
 
 
@@ -66,7 +67,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
         bannerMessage = message
 
         CoroutineScope(Dispatchers.Main).launch {
-            delay(2000)
+            delay(5000)
             bannerMessage = null
         }
     }
@@ -94,7 +95,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                 bannerMessage = "Hazard ahead!"
 
                 CoroutineScope(Dispatchers.Main).launch {
-                    delay(3000)
+                    delay(5000)
                     bannerMessage = null
                 }
 
@@ -110,7 +111,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                 bannerMessage = "Pothole Detected"
 
                 CoroutineScope(Dispatchers.Main).launch {
-                    delay(3000)
+                    delay(5000)
                     bannerMessage = null
                 }
 
@@ -140,7 +141,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                             bannerMessage = "Simulation complete"
 
                             CoroutineScope(Dispatchers.Main).launch {
-                                delay(2000)
+                                delay(5000)
                                 bannerMessage = null
                             }
                         }
