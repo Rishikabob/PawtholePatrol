@@ -23,6 +23,9 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val notificationHelper = remember { NotificationHelper(context) }
 
+    var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
+    var nearbyHazards by remember { mutableStateOf<List<GeoPoint>>(emptyList()) }
+
     var bannerMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
@@ -48,15 +51,19 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
     val pathToTraverse = listOf(
         GeoPoint(40.4, -79.9),
         GeoPoint(40.41, -79.91),
-        GeoPoint(40.4, -79.9)
+        GeoPoint(40.4, -79.9),
+        GeoPoint(40.41, -79.91),
+        GeoPoint(40.42, -79.92),
     )
 
 
     val hazardIndex = GeoSpatialIndex()
     //index.addPoints(hazards)
     hazardIndex.addPoint(GeoPoint(40.4 ,-79.9))
+    hazardIndex.addPoint(GeoPoint(40.42 ,-79.92))
 
 
+    val delayBetweenSteps = 3000.toLong()
 
     val monitor = HazardMonitor(
         index = hazardIndex,
@@ -67,7 +74,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
         bannerMessage = message
 
         CoroutineScope(Dispatchers.Main).launch {
-            delay(5000)
+            delay(delayBetweenSteps)
             bannerMessage = null
         }
     }
@@ -95,7 +102,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                 bannerMessage = "Hazard ahead!"
 
                 CoroutineScope(Dispatchers.Main).launch {
-                    delay(5000)
+                    delay(delayBetweenSteps)
                     bannerMessage = null
                 }
 
@@ -111,7 +118,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                 bannerMessage = "Pothole Detected"
 
                 CoroutineScope(Dispatchers.Main).launch {
-                    delay(5000)
+                    delay(delayBetweenSteps)
                     bannerMessage = null
                 }
 
@@ -133,6 +140,11 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
 
                     simulator.start(
                         onLocationUpdate = { location ->
+                            currentLocation = location
+
+                            val nearby = hazardIndex.findNearby(location, 100.0)
+                            nearbyHazards = nearby
+
                             monitor.onLocationUpdate(location)
                         },
                         onFinished = {
@@ -141,7 +153,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                             bannerMessage = "Simulation complete"
 
                             CoroutineScope(Dispatchers.Main).launch {
-                                delay(5000)
+                                delay(delayBetweenSteps)
                                 bannerMessage = null
                             }
                         }
@@ -150,6 +162,21 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
                 enabled = !isRunning
             ) {
                 Text(if (isRunning) "Running..." else "Start Simulation")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Nearby Hazards:")
+
+            if (nearbyHazards.isEmpty() || !isRunning) {
+                Text("None")
+            } else {
+                nearbyHazards.forEachIndexed { index, hazard ->
+                    Text(
+                        text = "${index + 1}. Lat: %.5f, Lon: %.5f"
+                            .format(hazard.latitude, hazard.longitude)
+                    )
+                }
             }
         }
     }

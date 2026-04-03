@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 
 class LocationSimulator(
     private val path: List<GeoPoint>,
-    private val intervalMs: Long = 5000L
+    private val intervalMs: Long = 3000L
 ) {
 
     fun start(
