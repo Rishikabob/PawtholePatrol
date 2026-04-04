@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
@@ -47,9 +48,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.pawtholepatrol.AppPreferences
+import com.example.pawtholepatrol.AppPreferences.isInquiryAudioEnabled
 import com.example.pawtholepatrol.PotholeDetectionService
 import com.example.pawtholepatrol.TrackingMode
 import com.example.pawtholepatrol.TrackingRuntime
+import com.example.pawtholepatrol.utility.EventConfirmationHelper
 
 private val ScreenGradientTop = Color(0xFFF2F7FF)
 private val ScreenGradientBottom = Color(0xFFE4EDFF)
@@ -67,6 +70,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val runtimeState by TrackingRuntime.state.collectAsState()
     var alertDistance by rememberSaveable { mutableFloatStateOf(AppPreferences.getAlertDistanceMeters(context).toFloat()) }
     var soundEnabled by rememberSaveable { mutableStateOf(AppPreferences.isSoundEnabled(context)) }
+    var inquiryVisualEnabled by rememberSaveable { mutableStateOf(AppPreferences.isInquiryVisualEnabled(context))}
+    var inquiryAudioEnabled by rememberSaveable { mutableStateOf(AppPreferences.isInquiryAudioEnabled(context)) }
     var autoDetectEnabled by rememberSaveable { mutableStateOf(AppPreferences.isAutoDetectEnabled(context)) }
     var showDeveloperSettings by rememberSaveable { mutableStateOf(false) }
 
@@ -181,6 +186,53 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    Text(
+                        "Inquiry Notification Settings",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                    )
+
+                    ToggleRow(
+                        label = "Visual Alerts",
+                        description = "Can confirm potholes via notification",
+                        checked = inquiryVisualEnabled,
+                        onCheckedChange = { newValue ->
+                            if (!newValue && !isInquiryAudioEnabled(context)) {
+                                // Turning off visual but audio is already off, force audio on
+                                inquiryAudioEnabled = true
+                                AppPreferences.setInquiryAudioEnabled(context, true)
+                            }
+                            inquiryVisualEnabled = newValue
+                            AppPreferences.setInquiryVisualEnabled(context, newValue)
+                        },
+                    )
+                    ToggleRow(
+                        label = "Audio Alerts",
+                        description = "Can confirm potholes via speech",
+                        checked = inquiryAudioEnabled,
+                        onCheckedChange = { newValue ->
+                            if (!newValue && !inquiryVisualEnabled) {
+                                // Turning off audio but visual is already off, force visual on
+                                inquiryVisualEnabled = true
+                                AppPreferences.setInquiryVisualEnabled(context, true)
+                            }
+                            inquiryAudioEnabled = newValue
+                            AppPreferences.setInquiryAudioEnabled(context, newValue)
+                        },
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -247,6 +299,125 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             shape = RoundedCornerShape(14.dp),
                         ) {
                             Text("Reset Granted Permissions", fontWeight = FontWeight.SemiBold)
+                        }
+
+                        // Testing the inquiry notification
+                        Text(
+                            "Initiate Mock Inquiries",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = TextSecondary,
+                        )
+                        val context = LocalContext.current;
+                        Button(
+                            onClick = {
+                                // Save original values
+                                val originalVisual = AppPreferences.isInquiryVisualEnabled(context)
+                                val originalAudio = AppPreferences.isInquiryAudioEnabled(context)
+
+                                // Force on for testing
+                                AppPreferences.setInquiryVisualEnabled(context, true)
+                                AppPreferences.setInquiryAudioEnabled(context, false)
+
+                                EventConfirmationHelper.askForConfirmation(
+                                    context,
+                                    "Was there a pothole?",
+                                    { confirmed ->
+                                        // Restore originals after the result comes in
+                                        AppPreferences.setInquiryVisualEnabled(context, originalVisual)
+                                        AppPreferences.setInquiryAudioEnabled(context, originalAudio)
+
+                                        if (confirmed) {
+                                            Log.d("Visual Notification", "User confirmed the event")
+                                        } else {
+                                            Log.d("Visual Notification", "User denied or time out")
+                                        }
+                                    }
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = DangerRed,
+                                contentColor = Color.White,
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                        ) {
+                            Text("Visual Inquiry Notification", fontWeight = FontWeight.SemiBold)
+                        }
+                        Button(
+                            onClick = {
+                                // Save original values
+                                val originalVisual = AppPreferences.isInquiryVisualEnabled(context)
+                                val originalAudio = AppPreferences.isInquiryAudioEnabled(context)
+
+                                // Force on for testing
+                                AppPreferences.setInquiryVisualEnabled(context, false)
+                                AppPreferences.setInquiryAudioEnabled(context, true)
+
+                                EventConfirmationHelper.askForConfirmation(
+                                    context,
+                                    "Was there a pothole?",
+                                    { confirmed ->
+                                        // Restore originals after the result comes in
+                                        AppPreferences.setInquiryVisualEnabled(context, originalVisual)
+                                        AppPreferences.setInquiryAudioEnabled(context, originalAudio)
+
+                                        if (confirmed) {
+                                            Log.d("Visual Notification", "User confirmed the event")
+                                        } else {
+                                            Log.d("Visual Notification", "User denied or time out")
+                                        }
+                                    }
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = DangerRed,
+                                contentColor = Color.White,
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                        ) {
+                            Text("Audio Inquiry Notification", fontWeight = FontWeight.SemiBold)
+                        }
+                        Button(
+                            onClick = {
+                                // Save original values
+                                val originalVisual = AppPreferences.isInquiryVisualEnabled(context)
+                                val originalAudio = AppPreferences.isInquiryAudioEnabled(context)
+
+                                // Force on for testing
+                                AppPreferences.setInquiryVisualEnabled(context, true)
+                                AppPreferences.setInquiryAudioEnabled(context, true)
+
+                                EventConfirmationHelper.askForConfirmation(
+                                    context,
+                                    "Was there a pothole?",
+                                    { confirmed ->
+                                        // Restore originals after the result comes in
+                                        AppPreferences.setInquiryVisualEnabled(context, originalVisual)
+                                        AppPreferences.setInquiryAudioEnabled(context, originalAudio)
+
+                                        if (confirmed) {
+                                            Log.d("Visual Notification", "User confirmed the event")
+                                        } else {
+                                            Log.d("Visual Notification", "User denied or time out")
+                                        }
+                                    }
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = DangerRed,
+                                contentColor = Color.White,
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                        ) {
+                            Text("Visual+Audio Inquiry Notification", fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
