@@ -1,5 +1,6 @@
 package com.example.pawtholepatrol.utility;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.speech.RecognitionListener;
@@ -16,6 +18,9 @@ import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+
+import com.example.pawtholepatrol.AppPreferences;
+import com.example.pawtholepatrol.service.OverlayService;
 
 import java.util.List;
 import java.util.Locale;
@@ -31,12 +36,15 @@ public class EventConfirmationHelper {
 
     // Timeout of the inquiry notification before it automatically accepts "No". Similar to the
     // Waze notifications that timeout when asking about a road condition.
-    private static final long TIMEOUT_MS = 10000;   // 10 seconds
+    private static final long TIMEOUT_MS = 10000;   // 10 seconds - Possible user study point on length of time
 
     private static ConfirmationCallback pendingCallback;
+
+    private static Context appContext;
+
     private static TextToSpeech tts;
     private static SpeechRecognizer speechRecognizer;
-    private static Handler timeoutHandler = new Handler(Looper.getMainLooper());
+
     private static AtomicBoolean resultDelivered = new AtomicBoolean(false);
 
     private static final String LOG_TAG = "EventConfirmationHelper";
@@ -80,31 +88,50 @@ public class EventConfirmationHelper {
     public static void askForConfirmation(Context context,
                                           String inquiry,
                                           ConfirmationCallback callback) {
+        appContext = context;
         pendingCallback = callback;
         resultDelivered.set(false);
 
-        showConfirmationNotification(context, inquiry);
-        speakAndListen(context, inquiry);
-        startTimeout();
+        boolean visualEnabled = AppPreferences.INSTANCE.isInquiryVisualEnabled(context);
+        boolean audioEnabled = AppPreferences.INSTANCE.isInquiryAudioEnabled(context);
+
+        if (visualEnabled) {
+            // Launch the WindowManager overlay service instead of a notification
+            Intent overlayIntent = new Intent(appContext, OverlayService.class);
+            overlayIntent.putExtra("question", inquiry);
+            overlayIntent.putExtra("timeout_ms", TIMEOUT_MS);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(overlayIntent);
+            }
+        }
+
+        if (audioEnabled) {
+            // Keep audio — it works independently of the visual
+            speakAndListen(context, inquiry);
+
+            if (!visualEnabled) {
+                // No overlay to handle the timeout, so do it manually
+                new Handler(Looper.getMainLooper()).postDelayed(() ->
+                        deliverResult(appContext, false), TIMEOUT_MS);
+            }
+        }
     }
 
     /**
      * Deliver the result for the inquiry notification whether it was called by the button
      * confirmation receiver, the text to speech, or by the timeout.
      */
-    public static void deliverResult(boolean confirmed) {
-        // Guard to only register the first response from the three methods
+    public static void deliverResult(Context context, boolean confirmed) {
         if (resultDelivered.getAndSet(true)) {
             Log.d(LOG_TAG, "Already received a response for the user");
             return;
         }
 
-        // Kill the timeout handler
-        timeoutHandler.removeCallbacksAndMessages(null);
+        // Stop the overlay service if it's still showing
+        context.stopService(new Intent(context, OverlayService.class));
 
-        // Check the speech to text response
         if (speechRecognizer != null) {
-            speechRecognizer.stopListening();   // Possible talking point - app only listens during the notification uptime
+            speechRecognizer.stopListening();
             speechRecognizer.destroy();
             speechRecognizer = null;
         }
@@ -130,9 +157,6 @@ public class EventConfirmationHelper {
         if (speechRecognizer != null) {
             speechRecognizer.destroy();
         }
-
-        // Clean up the timeout handler for the inquiry notifications
-        timeoutHandler.removeCallbacksAndMessages(null);
     }
 
     /**
@@ -141,62 +165,19 @@ public class EventConfirmationHelper {
     private static void createNotificationChannel(Context context) {
         // Need to check Android OS (notification channels were introduced at v26, current project minimum SDK is v24
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Inquiry Confirmations", NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("Asks user to confirm if pothole exists");
+            NotificationChannel silentChannel = new NotificationChannel(
+                    "overlay_service_channel",
+                    "Overlay Service",
+                    NotificationManager.IMPORTANCE_MIN  // No sound, no peek, no icon in status bar
+            );
+            silentChannel.setShowBadge(false);
+
+
             NotificationManager manager = context.getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(channel);
+            manager.createNotificationChannel(silentChannel);
         } else {
             Log.e(LOG_TAG, "Android SDK version is less than the required minimum: v26");
         }
-    }
-
-    /**
-     * Setting up the visual inquiry notification.
-     */
-    private static void showConfirmationNotification(Context context, String inquiry) {
-        // Set up the yes response
-        Intent yesIntent = new Intent(context, ConfirmationReceiver.class);
-        yesIntent.setAction(ConfirmationReceiver.PRESS_YES);
-        PendingIntent yesPending = PendingIntent.getBroadcast(
-                context,
-                0,
-                yesIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        // Set up the no response
-        Intent noIntent = new Intent(context, ConfirmationReceiver.class);
-        noIntent.setAction(ConfirmationReceiver.PRESS_NO);
-        PendingIntent noPending = PendingIntent.getBroadcast(
-                context,
-                1,
-                noIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        // Set up the layout and functions of the notification itself
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                .setContentTitle("Confirm Pothole")
-                .setContentText(inquiry)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)  // Setting it to high makes it a heads-up notification
-                .setCategory(NotificationCompat.CATEGORY_CALL)  // Call makes it an overlay
-                .addAction(android.R.drawable.ic_menu_send, "Yes ✓", yesPending)
-                .addAction(android.R.drawable.ic_delete, "No x", noPending)
-                .setAutoCancel(false)
-                .setOngoing(true);  // Prevents swiping the notification away
-
-        // Display the inquiry notification
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(INQUIRY_ID, builder.build());
-    }
-
-    /**
-     * Starts the handler to control the timeout of the notification, and if it times out, taking
-     * the user response as a no.
-     */
-    private static void startTimeout() {
-        timeoutHandler.postDelayed(() -> deliverResult(false), TIMEOUT_MS);
     }
 
     /**
@@ -258,10 +239,10 @@ public class EventConfirmationHelper {
                     for (String match : matches) {
                         String word = match.toLowerCase().trim();
                         if (word.contains("yes")) {
-                            deliverResult(true);
+                            deliverResult(appContext, true);
                             return;
                         } else if (word.contains("no")) {
-                            deliverResult(false);
+                            deliverResult(appContext, false);
                             return;
                         }
                     }

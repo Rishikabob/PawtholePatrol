@@ -5,8 +5,10 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -57,6 +59,12 @@ class MainActivity : ComponentActivity() {
     private val requestMultiplePermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
             requestActivityPermission()
+            requestOverlayPermission()
+        }
+
+    private val overlayPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            requestActivityPermission()  // ...then after overlay, check activity recognition
         }
 
     private fun requestStartupPermissions() {
@@ -80,7 +88,7 @@ class MainActivity : ComponentActivity() {
         if (missing.isNotEmpty()) {
             requestMultiplePermissionsLauncher.launch(missing.toTypedArray())
         } else {
-            requestActivityPermission()
+            requestOverlayPermission()  // Chain to overlay instead of activity permission
         }
     }
 
@@ -95,6 +103,19 @@ class MainActivity : ComponentActivity() {
         } else {
             Log.d("ActivityRecognition", "Permission Granted")
             startActivityUpdates()
+        }
+    }
+
+    private fun requestOverlayPermission() {
+        if (!Settings.canDrawOverlays(this)) {
+            overlayPermissionLauncher.launch(
+                Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+            )
+        } else {
+            requestActivityPermission()  // Overlay already granted, move to activity recognition
         }
     }
 
