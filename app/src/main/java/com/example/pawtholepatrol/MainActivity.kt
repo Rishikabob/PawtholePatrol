@@ -48,66 +48,29 @@ class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                Log.d("ActivityRecognition", "Permission Granted")
-                startActivityUpdates()
-            } else {
-                requestActivityPermission()
-            }
-        }
-
-    private val requestMultiplePermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
-            requestActivityPermission()
-            requestOverlayPermission()
+            requestStartupPermissions()
         }
 
     private val overlayPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            requestActivityPermission()  // ...then after overlay, check activity recognition
+            startActivityUpdates()
         }
 
     private fun requestStartupPermissions() {
-        val missing = mutableListOf<String>()
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
-            missing += Manifest.permission.POST_NOTIFICATIONS
-        }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            missing += Manifest.permission.ACCESS_FINE_LOCATION
-        }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
-            missing += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-        }
-
-        if (missing.isNotEmpty()) {
-            requestMultiplePermissionsLauncher.launch(missing.toTypedArray())
-        } else {
-            requestOverlayPermission()  // Chain to overlay instead of activity permission
-        }
-    }
-
-    private fun requestActivityPermission() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACTIVITY_RECOGNITION
-            ) != PackageManager.PERMISSION_GRANTED
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.d("ActivityRecognition", "Asking for permission")
             requestPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
-        } else {
-            Log.d("ActivityRecognition", "Permission Granted")
-            startActivityUpdates()
-        }
-    }
-
-    private fun requestOverlayPermission() {
-        if (!Settings.canDrawOverlays(this)) {
+        } else if (!Settings.canDrawOverlays(this)) {
+            Log.d("PawtholePatrolLogs", "Asking for overlay permission")
             overlayPermissionLauncher.launch(
                 Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -115,19 +78,20 @@ class MainActivity : ComponentActivity() {
                 )
             )
         } else {
-            requestActivityPermission()  // Overlay already granted, move to activity recognition
+            startActivityUpdates()
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun startActivityUpdates() {
+        Log.d("PawtholePatrolLogs", "Permission Granted")
         client
             .requestActivityTransitionUpdates(
                 ActivityTransitionUtil.getActivityTransitionRequest(),
                 getPendingIntent()
             )
-            .addOnSuccessListener { Log.d("ActivityRecognition", "Activity updates requested successfully") }
-            .addOnFailureListener { Log.e("ActivityRecognition", "Activity updates failed", it) }
+            .addOnSuccessListener { Log.d("PawtholePatrolLogs", "Activity updates requested successfully") }
+            .addOnFailureListener { Log.e("PawtholePatrolLogs", "Activity updates failed", it) }
     }
 
     private fun getPendingIntent(): PendingIntent {
