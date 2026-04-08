@@ -16,6 +16,7 @@ import com.example.pawtholepatrol.feature.geo.GeoSpatialIndex
 import com.example.pawtholepatrol.feature.monitor.HazardMonitor
 import com.example.pawtholepatrol.feature.notifications.AlertBanner
 import com.example.pawtholepatrol.feature.notifications.NotificationHelper
+import com.example.pawtholepatrol.feature.validation.ValidationStore
 import kotlinx.coroutines.*
 
 @Composable
@@ -71,16 +72,20 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
     val monitor = HazardMonitor(
         index = hazardIndex,
         radiusMeters = 100.0,
-        notificationHelper = notificationHelper
-    ) { message ->
+        notificationHelper = notificationHelper,
+        onEvent = { message ->
 
-        bannerMessage = message
+            bannerMessage = message
 
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(delayBetweenSteps)
-            bannerMessage = null
-        }
-    }
+            CoroutineScope(Dispatchers.Main).launch {
+                delay(delayBetweenSteps)
+                bannerMessage = null
+            }
+        },
+        onHazardDetected = { point ->
+            ValidationStore.addEvent(point)
+        },
+    )
 
     val simulator = LocationSimulator(pathToTraverse)
 

@@ -8,7 +8,8 @@ class HazardMonitor(
     private val index: GeoSpatialIndex,
     private val radiusMeters: Double,
     private val notificationHelper: NotificationHelper,
-    private val onEvent: (String) -> Unit
+    private val onEvent: (String) -> Unit,
+    private val onHazardDetected: (GeoPoint) -> Unit = {},
 ) {
 
     private var isInsideHazardZone = false
@@ -28,6 +29,7 @@ class HazardMonitor(
             )
 
             onEvent("ENTER hazard zone")
+            onHazardDetected(nearby.first())
         }
         else if (isInsideHazardZone && !currentlyInside) {
             isInsideHazardZone = false
