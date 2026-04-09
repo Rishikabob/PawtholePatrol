@@ -19,16 +19,21 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 
 class PotholeDetectionService : Service() {
-    private lateinit var geoPointList: List<GeoPoint>
+    private var geoPointList: List<GeoPoint> = emptyList()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
     override fun onCreate() {
         super.onCreate()
         try {
-            geoPointList = readCsv();
+            geoPointList = runBlocking(Dispatchers.IO) {
+                PotholeCsvStore.readAll(this@PotholeDetectionService)
+            }
+            Log.d("PawtholePatrolLogs", "Found ${geoPointList.size} potholes in writable csv")
             startForegroundServiceNotification()
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -73,23 +78,6 @@ class PotholeDetectionService : Service() {
             )
         }
     }
-    private fun readCsv(): List<GeoPoint> {
-        val result = mutableListOf<GeoPoint>()
-
-        val inputStream = this.resources.openRawResource(R.raw.potholes)
-        val reader = inputStream.bufferedReader()
-
-        reader.useLines { lines ->
-            lines.forEach { line ->
-                val row = line.split(",")
-                result.add(GeoPoint(row[0].toDouble(), row[1].toDouble()))
-            }
-        }
-
-        Log.d("PawtholePatrolLogs", "Found ${result.size} potholes in csv")
-        return result
-    }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> {
