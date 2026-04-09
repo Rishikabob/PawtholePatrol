@@ -13,6 +13,9 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.example.pawtholepatrol.feature.geo.GeoPoint
+import com.example.pawtholepatrol.feature.geo.GeoSpatialIndex
+import com.example.pawtholepatrol.feature.monitor.HazardMonitor
+import com.example.pawtholepatrol.feature.notifications.NotificationHelper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -26,6 +29,7 @@ class PotholeDetectionService : Service() {
     private var geoPointList: List<GeoPoint> = emptyList()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+    private lateinit var hazardMonitor: HazardMonitor
 
     override fun onCreate() {
         super.onCreate()
@@ -34,6 +38,22 @@ class PotholeDetectionService : Service() {
                 PotholeCsvStore.readAll(this@PotholeDetectionService)
             }
             Log.d("PawtholePatrolLogs", "Found ${geoPointList.size} potholes in writable csv")
+
+            val notificationHelper = NotificationHelper(this)
+            val hazardIndex = GeoSpatialIndex()
+            hazardIndex.addPoints(geoPointList)
+            hazardMonitor = HazardMonitor(
+                index = hazardIndex,
+                radiusMeters = 100.0, // can read from settings, or leave hard coded for test/demo
+                notificationHelper = notificationHelper, // can modify/remove if other notification source is preferred
+                onEvent = { message ->
+                    // in case we want to respond to enter/exit hazard zone event
+                },
+                onHazardDetected = { point ->
+                    // in case we want to respond using the location of a hazard
+                },
+            )
+
             startForegroundServiceNotification()
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -63,6 +83,7 @@ class PotholeDetectionService : Service() {
         Log.d("PawtholePatrolLogs", "Checking location for Lat: $lat, Lon: $lon")
 
         // 🔥 Your pothole logic here
+        hazardMonitor.onLocationUpdate(GeoPoint(lat, lon))
     }
 
     private fun startLocationUpdates(locationRequest: LocationRequest) {
