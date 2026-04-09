@@ -15,12 +15,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.pawtholepatrol.feature.home.HomeScreen
+import com.example.pawtholepatrol.feature.manual.ManualEntryScreen
 import com.example.pawtholepatrol.feature.sim.SimulationScreen
 import com.example.pawtholepatrol.feature.settings.SettingsScreen
 import com.example.pawtholepatrol.feature.validation.ValidationScreen
 
 private enum class AppTab(val label: String, val iconText: String) {
     HOME("Home", "H"),
+    MANUAL("Manual", "M"),
     SETTINGS("Settings", "S"),
     SIMULATION(label = "Simulation", iconText = "SIM"),
     VALIDATION(label = "Validation", iconText = "V"),
@@ -51,6 +53,7 @@ fun PawtholeApp() {
     ) { innerPadding ->
         when (AppTab.valueOf(selectedTab)) {
             AppTab.HOME -> HomeScreen(modifier = Modifier.padding(innerPadding))
+            AppTab.MANUAL -> ManualEntryScreen(modifier = Modifier.padding(innerPadding))
             AppTab.SETTINGS -> SettingsScreen(modifier = Modifier.padding(innerPadding))
             AppTab.SIMULATION -> SimulationScreen(modifier = Modifier.padding(innerPadding))
             AppTab.VALIDATION -> ValidationScreen(modifier = Modifier.padding(innerPadding))
