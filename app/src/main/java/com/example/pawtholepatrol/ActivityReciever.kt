@@ -15,16 +15,16 @@ import com.google.android.gms.location.DetectedActivity
 
 class ActivityReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d("ActivityRecognition", "Received intent: $intent, extras=${intent.extras?.keySet()}")
+        Log.d("PawtholePatrolLogs", "Received intent: $intent, extras=${intent.extras?.keySet()}")
         if (!ActivityTransitionResult.hasResult(intent)) return
 
         val result = ActivityTransitionResult.extractResult(intent) ?: return
         result.transitionEvents.forEach { event ->
             val info = "Transition: ${ActivityTransitionUtil.toActivityString(event.activityType)}  - ${ActivityTransitionUtil.toTransitionType(event.transitionType)}"
-            Log.d("ActivityRecognition", info)
+            Log.d("PawtholePatrolLogs", info)
 
             if (event.activityType == DetectedActivity.IN_VEHICLE && !AppPreferences.isAutoDetectEnabled(context)) {
-                Log.d("ActivityRecognition", "Auto Detect disabled in settings; ignoring transition")
+                Log.d("PawtholePatrolLogs", "Auto Detect disabled in settings; ignoring transition")
                 return@forEach
             }
 
@@ -43,18 +43,18 @@ class ActivityReceiver : BroadcastReceiver() {
                 }
 
                 if (!hasFineLocation || !hasBackgroundLocation) {
-                    Log.w("ActivityRecognition", "Skipping auto-start; location/background location permission missing")
+                    Log.w("PawtholePatrolLogs", "Skipping auto-start; location/background location permission missing")
                     return@forEach
                 }
 
-                Log.d("ActivityRecognition", "In vehicle: starting pothole detection service")
+                Log.d("PawtholePatrolLogs", "In vehicle: starting pothole detection service")
                 val serviceIntent = Intent(context, PotholeDetectionService::class.java).apply {
                     action = PotholeDetectionService.ACTION_START
                     putExtra(PotholeDetectionService.EXTRA_MODE, TrackingMode.AUTO.name)
                 }
                 context.startForegroundService(serviceIntent)
             } else if (event.activityType == DetectedActivity.IN_VEHICLE && event.transitionType == ActivityTransition.ACTIVITY_TRANSITION_EXIT) {
-                Log.d("ActivityRecognition", "Vehicle exit: stopping pothole detection service")
+                Log.d("PawtholePatrolLogs", "Vehicle exit: stopping pothole detection service")
                 val serviceIntent = Intent(context, PotholeDetectionService::class.java)
                 context.stopService(serviceIntent)
             }

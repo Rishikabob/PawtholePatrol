@@ -1,35 +1,93 @@
 package com.example.pawtholepatrol
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
-import android.os.Handler
+import android.content.pm.PackageManager
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import com.example.pawtholepatrol.feature.geo.GeoPoint
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 
 class PotholeDetectionService : Service() {
-
-    private val handler = Handler(Looper.getMainLooper())
-    private val runnable = object : Runnable {
-        override fun run() {
-            Log.d("PotholeDetectionService", "Tracking active...")
-            handler.postDelayed(this, 5_000)
-        }
-    }
+    private lateinit var geoPointList: List<GeoPoint>
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
 
     override fun onCreate() {
         super.onCreate()
         try {
+            geoPointList = readCsv();
             startForegroundServiceNotification()
-            handler.post(runnable)
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+            val locationRequest = LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                5000 // 5 seconds
+            )
+                .setMinUpdateDistanceMeters(10f) // only trigger if moved 10m
+                .build()
+
+            locationCallback = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+                    for (location in result.locations) {
+                        checkLocation(location.latitude, location.longitude)
+                    }
+                }
+            }
+
+            startLocationUpdates(locationRequest)
         } catch (securityException: SecurityException) {
             Log.e("PotholeDetectionService", "Unable to start foreground service; missing runtime permission or background eligibility", securityException)
             stopSelf()
         }
+    }
+
+    private fun checkLocation(lat: Double, lon: Double) {
+        Log.d("PawtholePatrolLogs", "Checking location for Lat: $lat, Lon: $lon")
+
+        // 🔥 Your pothole logic here
+    }
+
+    private fun startLocationUpdates(locationRequest: LocationRequest) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.getMainLooper()
+            )
+        }
+    }
+    private fun readCsv(): List<GeoPoint> {
+        val result = mutableListOf<GeoPoint>()
+
+        val inputStream = this.resources.openRawResource(R.raw.potholes)
+        val reader = inputStream.bufferedReader()
+
+        reader.useLines { lines ->
+            lines.forEach { line ->
+                val row = line.split(",")
+                result.add(GeoPoint(row[0].toDouble(), row[1].toDouble()))
+            }
+        }
+
+        Log.d("PawtholePatrolLogs", "Found ${result.size} potholes in csv")
+        return result
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -76,7 +134,7 @@ class PotholeDetectionService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacks(runnable)
+        fusedLocationClient.removeLocationUpdates(locationCallback)
         TrackingRuntime.onStopped()
     }
 
