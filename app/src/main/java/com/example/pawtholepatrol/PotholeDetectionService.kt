@@ -72,6 +72,13 @@ class PotholeDetectionService : Service() {
                 }
             }
 
+            PotholeCsvStore.setUpdateEventFunction {
+                geoPointList = runBlocking(Dispatchers.IO) {
+                    PotholeCsvStore.readAll(this@PotholeDetectionService)
+                }
+                hazardIndex.addPoints(geoPointList)
+            }
+
             startLocationUpdates(locationRequest)
         } catch (securityException: SecurityException) {
             Log.e("PotholeDetectionService", "Unable to start foreground service; missing runtime permission or background eligibility", securityException)

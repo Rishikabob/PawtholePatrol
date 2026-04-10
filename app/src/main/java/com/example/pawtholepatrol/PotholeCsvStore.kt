@@ -9,6 +9,11 @@ import java.io.File
 
 object PotholeCsvStore {
     private const val CSV_FILE_NAME = "potholes.csv"
+    private var onUpdate: (() -> Unit)? = null
+
+    fun setUpdateEventFunction(callback: () -> Unit) {
+        onUpdate = callback
+    }
 
     suspend fun ensureSeeded(context: Context) = withContext(Dispatchers.IO) {
         val file = File(context.filesDir, CSV_FILE_NAME)
@@ -55,6 +60,9 @@ object PotholeCsvStore {
         ensureSeeded(context)
         val file = File(context.filesDir, CSV_FILE_NAME)
         file.appendText("${point.latitude},${point.longitude}\n")
+        withContext(Dispatchers.Main) {
+            onUpdate?.invoke()
+        }
     }
 
     suspend fun replaceAll(context: Context, points: List<GeoPoint>) = withContext(Dispatchers.IO) {
@@ -65,6 +73,9 @@ object PotholeCsvStore {
                 writer.append("${point.latitude},${point.longitude}")
                 writer.newLine()
             }
+        }
+        withContext(Dispatchers.Main) {
+            onUpdate?.invoke()
         }
     }
 }
