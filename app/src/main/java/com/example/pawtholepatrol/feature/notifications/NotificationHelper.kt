@@ -57,10 +57,11 @@ class NotificationHelper(private val context: Context) {
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setOnlyAlertOnce(true) // 🔥 prevents re-sound/vibration spam
             .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(System.currentTimeMillis().toInt(), notification)
+        manager.notify(1001, notification)
 
         speak(message)
     }
