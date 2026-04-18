@@ -53,6 +53,7 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
 
     val monitor = remember {
         HazardMonitor(
+            context = context,
             index = hazardIndex,
             radiusMeters = 100.0,
             notificationHelper = notificationHelper,

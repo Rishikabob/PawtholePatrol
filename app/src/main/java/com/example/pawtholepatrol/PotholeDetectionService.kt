@@ -43,6 +43,7 @@ class PotholeDetectionService : Service() {
             val hazardIndex = GeoSpatialIndex()
             hazardIndex.addPoints(geoPointList)
             hazardMonitor = HazardMonitor(
+                context = this,
                 index = hazardIndex,
                 radiusMeters = 100.0, // can read from settings, or leave hard coded for test/demo
                 notificationHelper = notificationHelper, // can modify/remove if other notification source is preferred

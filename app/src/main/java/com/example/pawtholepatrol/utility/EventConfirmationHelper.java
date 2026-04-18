@@ -1,14 +1,11 @@
 package com.example.pawtholepatrol.utility;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.speech.RecognitionListener;
@@ -16,8 +13,6 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
-
-import androidx.core.app.NotificationCompat;
 
 import com.example.pawtholepatrol.AppPreferences;
 import com.example.pawtholepatrol.service.OverlayService;
@@ -27,12 +22,6 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EventConfirmationHelper {
-
-    // ID of the notification used for the inquiry
-    public static final int INQUIRY_ID = 117;
-
-    // ID of the channel that handles the inquiry notifications
-    private static final String CHANNEL_ID = "confirmation_channel";
 
     // Timeout of the inquiry notification before it automatically accepts "No". Similar to the
     // Waze notifications that timeout when asking about a road condition.
@@ -88,6 +77,8 @@ public class EventConfirmationHelper {
     public static void askForConfirmation(Context context,
                                           String inquiry,
                                           ConfirmationCallback callback) {
+        Log.d(LOG_TAG, "askForConfirmation - Launching inquiry");
+
         appContext = context;
         pendingCallback = callback;
         resultDelivered.set(false);
@@ -96,6 +87,8 @@ public class EventConfirmationHelper {
         boolean audioEnabled = AppPreferences.INSTANCE.isInquiryAudioEnabled(context);
 
         if (visualEnabled) {
+            Log.d(LOG_TAG, "askForConfirmation - Launching overlay");
+
             // Launch the WindowManager overlay service instead of a notification
             Intent overlayIntent = new Intent(appContext, OverlayService.class);
             overlayIntent.putExtra("question", inquiry);
@@ -106,13 +99,15 @@ public class EventConfirmationHelper {
         }
 
         if (audioEnabled) {
+            Log.d(LOG_TAG, "askForConfirmation - Launching audio");
+
             // Keep audio — it works independently of the visual
             speakAndListen(context, inquiry);
 
             if (!visualEnabled) {
                 // No overlay to handle the timeout, so do it manually
                 new Handler(Looper.getMainLooper()).postDelayed(() ->
-                        deliverResult(appContext, false), TIMEOUT_MS);
+                        deliverResult(appContext, true), TIMEOUT_MS);   // Don't delete point on timeout
             }
         }
     }
