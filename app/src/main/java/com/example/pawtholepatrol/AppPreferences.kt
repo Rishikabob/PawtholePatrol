@@ -7,6 +7,7 @@ object AppPreferences {
     private const val KEY_AUTO_DETECT = "auto_detect"
     private const val KEY_SOUND_ENABLED = "sound_enabled"
     private const val KEY_ALERT_DISTANCE = "alert_distance"
+    private const val KEY_INQUIRY_ENABLED = "inquiry_enabled"
     private const val KEY_INQUIRY_VISUAL_ENABLED = "inquiry_visual_enabled"
     private const val KEY_INQUIRY_AUDIO_ENABLED = "inquiry_audio_enabled"
 
@@ -25,6 +26,13 @@ object AppPreferences {
 
     fun setSoundEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_SOUND_ENABLED, enabled).apply()
+    }
+
+    fun isInquiryEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_INQUIRY_ENABLED, true)
+
+    fun setInquiryEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_INQUIRY_ENABLED, enabled).apply()
     }
 
     fun isInquiryVisualEnabled(context: Context): Boolean =

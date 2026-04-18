@@ -21,6 +21,11 @@ class GeoSpatialIndex(
         return Pair(x, y)
     }
 
+    fun rebuild(points: List<GeoPoint>) {
+        grid.clear()
+        addPoints(points)
+    }
+
     fun addPoint(point: GeoPoint) {
         val cell = getCell(point)
         grid.getOrPut(cell) { mutableListOf() }.add(point)

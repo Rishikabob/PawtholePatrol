@@ -7,6 +7,7 @@ import android.graphics.PixelFormat
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -24,6 +25,8 @@ class OverlayService : Service() {
     private lateinit var overlayView: View
     private var countdownTimer: CountDownTimer? = null
     private val timeoutMs = 10000L
+
+    private val LOG_TAG = "OverlayService"
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val question = intent?.getStringExtra("question") ?: "Confirm"
@@ -47,6 +50,8 @@ class OverlayService : Service() {
     }
 
     private fun showOverlay(question: String, timeoutMs: Long) {
+        Log.d(LOG_TAG, "showOverlay, Starting overlay")
+
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
         val inflater = LayoutInflater.from(this)
@@ -86,16 +91,18 @@ class OverlayService : Service() {
             }
 
             override fun onFinish() {
-                onUserResponse(false)
+                onUserResponse(true)    // Prevent deleting the point
             }
         }.start()
     }
 
     private fun onUserResponse(answer: Boolean) {
+        Log.d(LOG_TAG, "onUserResponse, handle result")
         countdownTimer?.cancel()
 
         // Broadcast result so ConfirmationReceiver delivers it to EventConfirmationHelper
         val action = if (answer) ConfirmationReceiver.PRESS_YES else ConfirmationReceiver.PRESS_NO
+        Log.d(LOG_TAG, "onUserResponse, result was: $action")
         sendBroadcast(Intent(action))
 
         dismiss()

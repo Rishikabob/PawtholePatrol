@@ -48,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.pawtholepatrol.AppPreferences
-import com.example.pawtholepatrol.AppPreferences.isInquiryAudioEnabled
 import com.example.pawtholepatrol.PotholeDetectionService
 import com.example.pawtholepatrol.TrackingMode
 import com.example.pawtholepatrol.TrackingRuntime
@@ -70,6 +69,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val runtimeState by TrackingRuntime.state.collectAsState()
     var alertDistance by rememberSaveable { mutableFloatStateOf(AppPreferences.getAlertDistanceMeters(context).toFloat()) }
     var soundEnabled by rememberSaveable { mutableStateOf(AppPreferences.isSoundEnabled(context)) }
+    var inquiryEnabled by rememberSaveable { mutableStateOf(AppPreferences.isInquiryEnabled(context)) }
     var inquiryVisualEnabled by rememberSaveable { mutableStateOf(AppPreferences.isInquiryVisualEnabled(context))}
     var inquiryAudioEnabled by rememberSaveable { mutableStateOf(AppPreferences.isInquiryAudioEnabled(context)) }
     var autoDetectEnabled by rememberSaveable { mutableStateOf(AppPreferences.isAutoDetectEnabled(context)) }
@@ -194,11 +194,42 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     )
 
                     ToggleRow(
+                        label = "Inquiry Enabled",
+                        description = "Confirm pothole status during pothole event",
+                        checked = inquiryEnabled,
+                        onCheckedChange = { newValue ->
+                            // Turn off visual and audio alerts if not enabled, and it's switched off
+                            if (!newValue && inquiryVisualEnabled) {
+                                inquiryVisualEnabled = false
+                                AppPreferences.setInquiryVisualEnabled(context, false)
+                            }
+                            if (!newValue && inquiryAudioEnabled) {
+                                inquiryAudioEnabled = false
+                                AppPreferences.setInquiryAudioEnabled(context, false)
+                            }
+
+                            // Default to turn on just visual alert if switching the setting back on
+                            if (newValue) {
+                                inquiryVisualEnabled = true
+                                AppPreferences.setInquiryVisualEnabled(context, true)
+                            }
+
+                            inquiryEnabled = newValue
+                            AppPreferences.setInquiryEnabled(context, newValue)
+                        },
+                    )
+                    ToggleRow(
                         label = "Visual Alerts",
                         description = "Can confirm potholes via notification",
                         checked = inquiryVisualEnabled,
                         onCheckedChange = { newValue ->
-                            if (!newValue && !isInquiryAudioEnabled(context)) {
+                            // If turning on but overall setting turned off, enable it
+                            if (newValue && !AppPreferences.isInquiryEnabled(context)) {
+                                inquiryEnabled = true
+                                AppPreferences.setInquiryEnabled(context, true)
+                            }
+
+                            if (!newValue && !AppPreferences.isInquiryAudioEnabled(context)) {
                                 // Turning off visual but audio is already off, force audio on
                                 inquiryAudioEnabled = true
                                 AppPreferences.setInquiryAudioEnabled(context, true)
@@ -212,6 +243,12 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         description = "Can confirm potholes via speech",
                         checked = inquiryAudioEnabled,
                         onCheckedChange = { newValue ->
+                            // If turning on but overall setting turned off, enable it
+                            if (newValue && !AppPreferences.isInquiryEnabled(context)) {
+                                inquiryEnabled = true
+                                AppPreferences.setInquiryEnabled(context, true)
+                            }
+
                             if (!newValue && !inquiryVisualEnabled) {
                                 // Turning off audio but visual is already off, force visual on
                                 inquiryVisualEnabled = true
@@ -307,7 +344,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             style = MaterialTheme.typography.labelLarge,
                             color = TextSecondary,
                         )
-                        val context = LocalContext.current;
+                        val context = LocalContext.current
                         Button(
                             onClick = {
                                 // Save original values
