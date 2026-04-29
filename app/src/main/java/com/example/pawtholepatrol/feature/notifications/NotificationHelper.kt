@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import androidx.core.app.NotificationCompat
+import com.example.pawtholepatrol.AppPreferences
 import java.util.*
 
 class NotificationHelper(private val context: Context) {
@@ -63,7 +64,9 @@ class NotificationHelper(private val context: Context) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(1001, notification)
 
-        speak(message)
+        if (AppPreferences.isSoundEnabled(context)) {
+            speak(message)
+        }
     }
 
     fun showGeneralNotification(title: String, message: String) {

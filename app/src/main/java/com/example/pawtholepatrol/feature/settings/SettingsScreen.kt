@@ -1,16 +1,11 @@
 package com.example.pawtholepatrol.feature.settings
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
-import android.os.Process
-import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -37,6 +31,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,6 +46,7 @@ import com.example.pawtholepatrol.AppPreferences
 import com.example.pawtholepatrol.PotholeDetectionService
 import com.example.pawtholepatrol.TrackingMode
 import com.example.pawtholepatrol.TrackingRuntime
+import com.example.pawtholepatrol.feature.notifications.NotificationHelper
 import com.example.pawtholepatrol.utility.EventConfirmationHelper
 
 private val ScreenGradientTop = Color(0xFFF2F7FF)
@@ -67,6 +63,7 @@ private val ActiveGreen = Color(0xFF15B97A)
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val runtimeState by TrackingRuntime.state.collectAsState()
+    val notificationHelper = remember { NotificationHelper(context) }
     var alertDistance by rememberSaveable { mutableFloatStateOf(AppPreferences.getAlertDistanceMeters(context).toFloat()) }
     var soundEnabled by rememberSaveable { mutableStateOf(AppPreferences.isSoundEnabled(context)) }
     var inquiryEnabled by rememberSaveable { mutableStateOf(AppPreferences.isInquiryEnabled(context)) }
@@ -152,16 +149,6 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         },
                         valueRange = 40f..300f,
                     )
-
-                    ToggleRow(
-                        label = "Sound Alerts",
-                        description = "Play warning sounds during pothole alerts",
-                        checked = soundEnabled,
-                        onCheckedChange = {
-                            soundEnabled = it
-                            AppPreferences.setSoundEnabled(context, it)
-                        },
-                    )
                     ToggleRow(
                         label = "Auto Detect",
                         description = "Use activity recognition to start/stop tracking in vehicle",
@@ -176,6 +163,51 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     )
                 }
             }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        "Pothole Notification Settings",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                    )
+                    ToggleRow(
+                        label = "Text Speech Alerts",
+                        description = "Text to Speech notification during pothole alerts",
+                        checked = soundEnabled,
+                        onCheckedChange = {
+                            soundEnabled = it
+                            AppPreferences.setSoundEnabled(context, it)
+                        },
+                    )
+                    Button(
+                        onClick = {
+                            notificationHelper.showCriticalNotification(
+                                "Hazard Ahead",
+                                "You are entering a hazard area"
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = DangerRed,
+                            contentColor = Color.White,
+                        ),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text("Test Pothole Notification", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -187,7 +219,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
-                        "Inquiry Notification Settings",
+                        "Pothole Inquiry Settings",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary,
@@ -258,6 +290,31 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             AppPreferences.setInquiryAudioEnabled(context, newValue)
                         },
                     )
+                    Button(
+                        onClick = {
+                            EventConfirmationHelper.askForConfirmation(
+                                context,
+                                "Was there a pothole?",
+                                { confirmed ->
+                                    if (confirmed) {
+                                        Log.d("Visual Notification", "User confirmed the event")
+                                    } else {
+                                        Log.d("Visual Notification", "User denied or time out")
+                                    }
+                                }
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = DangerRed,
+                            contentColor = Color.White,
+                        ),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text("Test Pothole Inquiry", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
 
@@ -276,7 +333,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
-                            text = "Developer Settings",
+                            text = "Help Demo",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary,
@@ -291,171 +348,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     }
 
                     if (showDeveloperSettings) {
-                        HorizontalDivider()
-                        Text(
-                            "Testing Tools",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = TextSecondary,
-                        )
-                        Button(
-                            onClick = {
-                                when (val result = schedulePermissionReset(context)) {
-                                    is PermissionResetResult.Scheduled -> {
-                                        Toast.makeText(
-                                            context,
-                                            "Scheduled ${result.count} permission(s) for revoke. Restarting app...",
-                                            Toast.LENGTH_LONG,
-                                        ).show()
-                                        (context as? Activity)?.window?.decorView?.postDelayed({
-                                            (context as Activity).finishAffinity()
-                                            Process.killProcess(Process.myPid())
-                                        }, 700)
-                                    }
-
-                                    PermissionResetResult.NoGrantedPermissions -> {
-                                        Toast.makeText(context, "No granted permissions to reset", Toast.LENGTH_SHORT).show()
-                                    }
-
-                                    PermissionResetResult.UnsupportedApi -> {
-                                        Toast.makeText(
-                                            context,
-                                            "Auto-revoke not supported here. Open App Settings and revoke manually.",
-                                            Toast.LENGTH_LONG,
-                                        ).show()
-                                        openAppSettings(context)
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = DangerRed,
-                                contentColor = Color.White,
-                            ),
-                            shape = RoundedCornerShape(14.dp),
-                        ) {
-                            Text("Reset Granted Permissions", fontWeight = FontWeight.SemiBold)
-                        }
-
-                        // Testing the inquiry notification
-                        Text(
-                            "Initiate Mock Inquiries",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = TextSecondary,
-                        )
-                        val context = LocalContext.current
-                        Button(
-                            onClick = {
-                                // Save original values
-                                val originalVisual = AppPreferences.isInquiryVisualEnabled(context)
-                                val originalAudio = AppPreferences.isInquiryAudioEnabled(context)
-
-                                // Force on for testing
-                                AppPreferences.setInquiryVisualEnabled(context, true)
-                                AppPreferences.setInquiryAudioEnabled(context, false)
-
-                                EventConfirmationHelper.askForConfirmation(
-                                    context,
-                                    "Was there a pothole?",
-                                    { confirmed ->
-                                        // Restore originals after the result comes in
-                                        AppPreferences.setInquiryVisualEnabled(context, originalVisual)
-                                        AppPreferences.setInquiryAudioEnabled(context, originalAudio)
-
-                                        if (confirmed) {
-                                            Log.d("Visual Notification", "User confirmed the event")
-                                        } else {
-                                            Log.d("Visual Notification", "User denied or time out")
-                                        }
-                                    }
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = DangerRed,
-                                contentColor = Color.White,
-                            ),
-                            shape = RoundedCornerShape(14.dp),
-                        ) {
-                            Text("Visual Inquiry Notification", fontWeight = FontWeight.SemiBold)
-                        }
-                        Button(
-                            onClick = {
-                                // Save original values
-                                val originalVisual = AppPreferences.isInquiryVisualEnabled(context)
-                                val originalAudio = AppPreferences.isInquiryAudioEnabled(context)
-
-                                // Force on for testing
-                                AppPreferences.setInquiryVisualEnabled(context, false)
-                                AppPreferences.setInquiryAudioEnabled(context, true)
-
-                                EventConfirmationHelper.askForConfirmation(
-                                    context,
-                                    "Was there a pothole?",
-                                    { confirmed ->
-                                        // Restore originals after the result comes in
-                                        AppPreferences.setInquiryVisualEnabled(context, originalVisual)
-                                        AppPreferences.setInquiryAudioEnabled(context, originalAudio)
-
-                                        if (confirmed) {
-                                            Log.d("Visual Notification", "User confirmed the event")
-                                        } else {
-                                            Log.d("Visual Notification", "User denied or time out")
-                                        }
-                                    }
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = DangerRed,
-                                contentColor = Color.White,
-                            ),
-                            shape = RoundedCornerShape(14.dp),
-                        ) {
-                            Text("Audio Inquiry Notification", fontWeight = FontWeight.SemiBold)
-                        }
-                        Button(
-                            onClick = {
-                                // Save original values
-                                val originalVisual = AppPreferences.isInquiryVisualEnabled(context)
-                                val originalAudio = AppPreferences.isInquiryAudioEnabled(context)
-
-                                // Force on for testing
-                                AppPreferences.setInquiryVisualEnabled(context, true)
-                                AppPreferences.setInquiryAudioEnabled(context, true)
-
-                                EventConfirmationHelper.askForConfirmation(
-                                    context,
-                                    "Was there a pothole?",
-                                    { confirmed ->
-                                        // Restore originals after the result comes in
-                                        AppPreferences.setInquiryVisualEnabled(context, originalVisual)
-                                        AppPreferences.setInquiryAudioEnabled(context, originalAudio)
-
-                                        if (confirmed) {
-                                            Log.d("Visual Notification", "User confirmed the event")
-                                        } else {
-                                            Log.d("Visual Notification", "User denied or time out")
-                                        }
-                                    }
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = DangerRed,
-                                contentColor = Color.White,
-                            ),
-                            shape = RoundedCornerShape(14.dp),
-                        ) {
-                            Text("Visual+Audio Inquiry Notification", fontWeight = FontWeight.SemiBold)
-                        }
+                        //TODO: remove simulation tab and add button to play simulation video
                     }
                 }
             }
@@ -518,46 +411,4 @@ private fun hasPermission(context: Context, permission: String): Boolean {
 private fun hasAnyLocationPermission(context: Context): Boolean {
     return hasPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ||
         hasPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
-}
-
-private fun openAppSettings(context: Context) {
-    val intent = Intent(
-        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.fromParts("package", context.packageName, null),
-    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    context.startActivity(intent)
-}
-
-private sealed interface PermissionResetResult {
-    data class Scheduled(val count: Int) : PermissionResetResult
-    data object NoGrantedPermissions : PermissionResetResult
-    data object UnsupportedApi : PermissionResetResult
-}
-
-private fun schedulePermissionReset(context: Context): PermissionResetResult {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        return PermissionResetResult.UnsupportedApi
-    }
-
-    val resetCandidates = buildList {
-        add(Manifest.permission.ACCESS_COARSE_LOCATION)
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
-        add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        add(Manifest.permission.ACTIVITY_RECOGNITION)
-        add(Manifest.permission.POST_NOTIFICATIONS)
-    }
-
-    val granted = resetCandidates.filter { permission ->
-        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-    }
-
-    if (granted.isEmpty()) {
-        return PermissionResetResult.NoGrantedPermissions
-    }
-
-    granted.forEach { permission ->
-        context.revokeSelfPermissionOnKill(permission)
-    }
-
-    return PermissionResetResult.Scheduled(granted.size)
 }

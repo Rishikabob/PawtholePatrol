@@ -98,6 +98,16 @@ class MainActivity : ComponentActivity() {
                 }
                 .setCancelable(false) // disables back button dismiss
                 .show()
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+        ) {
+            AlertDialog.Builder(this)
+                .setTitle("Permission Required")
+                .setMessage("This app needs microphone access.")
+                .setPositiveButton("Continue") { _, _ ->
+                    requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+                .setCancelable(false) // disables back button dismiss
+                .show()
         } else if (!Settings.canDrawOverlays(this)) {
             Log.d("PawtholePatrolLogs", "Asking for overlay permission")
             AlertDialog.Builder(this)
@@ -140,5 +150,6 @@ class MainActivity : ComponentActivity() {
 
         // Close the inquiry utility on application shutdown
         EventConfirmationHelper.shutdown()
+        notificationHelper.shutdown()
     }
 }

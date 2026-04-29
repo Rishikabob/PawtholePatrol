@@ -55,7 +55,6 @@ fun SimulationScreen(modifier: Modifier = Modifier) {
         HazardMonitor(
             context = context,
             index = hazardIndex,
-            radiusMeters = 100.0,
             notificationHelper = notificationHelper,
             onEvent = {},
             onHazardDetected = { point ->

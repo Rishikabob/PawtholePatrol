@@ -45,7 +45,6 @@ class PotholeDetectionService : Service() {
             hazardMonitor = HazardMonitor(
                 context = this,
                 index = hazardIndex,
-                radiusMeters = 100.0, // can read from settings, or leave hard coded for test/demo
                 notificationHelper = notificationHelper, // can modify/remove if other notification source is preferred
                 onEvent = { message ->
                     // in case we want to respond to enter/exit hazard zone event
