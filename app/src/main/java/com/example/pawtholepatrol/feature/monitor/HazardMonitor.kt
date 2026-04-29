@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 class HazardMonitor(
     private val context: Context,
     private val index: GeoSpatialIndex,
-    private val radiusMeters: Double,
     private val notificationHelper: NotificationHelper,
     private val onEvent: (String) -> Unit,
     private val onHazardDetected: (GeoPoint) -> Unit = {},
@@ -26,7 +25,8 @@ class HazardMonitor(
     private val scope = CoroutineScope(Dispatchers.Main)
 
     fun onLocationUpdate(current: GeoPoint) {
-        val nearby = index.findNearby(current, radiusMeters)
+        val alertDistance = AppPreferences.getAlertDistanceMeters(context);
+        val nearby = index.findNearby(current, alertDistance.toDouble() )
         val currentlyInside = nearby.isNotEmpty()
 
         println("Location: $current | Nearby: ${nearby.size}")

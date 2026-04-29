@@ -231,6 +231,7 @@ public class EventConfirmationHelper {
             public void onResults(Bundle bundle) {
                 List<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null) {
+                    Log.d(LOG_TAG, matches.toString());
                     for (String match : matches) {
                         String word = match.toLowerCase().trim();
                         if (word.contains("yes")) {
@@ -249,6 +250,7 @@ public class EventConfirmationHelper {
 
             @Override public void onRmsChanged(float v) {}
         });
+        speechRecognizer.startListening(listenIntent);
     }
 
 }
